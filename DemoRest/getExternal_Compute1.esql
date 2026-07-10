@@ -1,0 +1,21 @@
+CREATE COMPUTE MODULE getExternal_Compute1
+
+CREATE FUNCTION Main() RETURNS BOOLEAN
+BEGIN
+
+    CREATE LASTCHILD OF OutputRoot DOMAIN('JSON');
+    CREATE FIELD OutputRoot.JSON.Data;
+
+    SET OutputRoot.JSON.Data.status = 'Failure terminal reached';
+
+    SET OutputRoot.JSON.Data.LocalEnvironment =
+        CAST(InputLocalEnvironment AS CHARACTER CCSID 1208);
+
+    SET OutputRoot.JSON.Data.ExceptionList =
+        CAST(InputExceptionList AS CHARACTER CCSID 1208);
+
+    RETURN TRUE;
+
+END;
+
+END MODULE;

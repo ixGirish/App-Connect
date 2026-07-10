@@ -1,0 +1,27 @@
+CREATE COMPUTE MODULE createStudent_Compute
+
+    CREATE FUNCTION Main() RETURNS BOOLEAN
+    BEGIN
+    
+        DECLARE vName CHARACTER;
+        DECLARE vAge INT;
+        DECLARE vEmail CHARACTER;
+
+        SET vEmail = InputRoot.JSON.Data.email;
+        SET vName = InputRoot.JSON.Data.name;
+        SET vAge = InputRoot.JSON.Data.age;
+
+        PASSTHRU(
+            'INSERT INTO dbo.STUDENT (EMAIL, NAME, AGE) VALUES (?, ?, ?)',
+            vEmail,
+            vName,
+            vAge
+        );
+
+        SET OutputRoot.JSON.Data.status = 'Success';
+        SET OutputRoot.JSON.Data.message = 'Student inserted successfully';
+
+        RETURN TRUE;
+    END;
+
+END MODULE;

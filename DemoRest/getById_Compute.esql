@@ -1,0 +1,62 @@
+
+
+CREATE COMPUTE MODULE getById_Compute
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		 DECLARE studentId INTEGER;
+
+        SET studentId = CAST(
+            InputLocalEnvironment.REST.Input.Parameters.id AS INTEGER
+        );
+
+        SET OutputRoot.Properties.MessageDomain = 'JSON';
+
+        CREATE LASTCHILD OF OutputRoot DOMAIN 'JSON';
+
+      CREATE FIELD OutputRoot.JSON.Data.output IDENTITY  output;
+     CREATE FIELD OutputRoot.JSON.Data.error IDENTITY (JSON.Array) error;
+    
+SET Environment.Result[] = PASSTHRU(
+    'SELECT
+        ID,
+        NAME,
+        AGE,
+        EMAIL
+     FROM dbo.STUDENT
+     WHERE ID = ?',
+    studentId
+);
+
+       DECLARE ref REFERENCE TO Environment.Result[1];
+
+IF LASTMOVE(ref) THEN
+    SET OutputRoot.JSON.Data.output.id    = ref.ID;
+    SET OutputRoot.JSON.Data.output.name  = ref.NAME;
+    SET OutputRoot.JSON.Data.output.age   = ref.AGE;
+    SET OutputRoot.JSON.Data.output.email = ref.EMAIL;
+        SET OutputRoot.JSON.Data.error.Item[1].msgCode = 'SUCCESS';
+    SET OutputRoot.JSON.Data.error.Item[1].description = 'Student Data fetched Sucessfully';
+    SET OutputRoot.JSON.Data.error.Item[1].code = 200;
+ELSE
+    SET OutputRoot.JSON.Data.error.Item[1].msgCode = 'NOT_FOUND';
+    SET OutputRoot.JSON.Data.error.Item[1].description = 'Student not found';
+    SET OutputRoot.JSON.Data.error.Item[1].code = 404;
+END IF;
+      
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;
