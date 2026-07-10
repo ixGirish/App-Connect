@@ -1,0 +1,47 @@
+
+
+CREATE COMPUTE MODULE putUpdate_Compute
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		-- CALL CopyEntireMessage();
+		
+		DECLARE vName CHARACTER;
+        DECLARE vAge INT;
+        DECLARE vEmail CHARACTER;
+        DECLARE vId Int;
+
+        SET vEmail = InputRoot.JSON.Data.email;
+        SET vName = InputRoot.JSON.Data.name;
+        SET vAge = InputRoot.JSON.Data.age;
+        SET vId= InputRoot.JSON.Data.id;
+
+        PASSTHRU(
+            'UPDATE dbo.STUDENT SET NAME=?,EMAIL=?,AGE=? WHERE ID=?',
+            vName,
+             vEmail,
+            vAge,
+            vId
+        );
+        
+        
+
+        SET OutputRoot.JSON.Data.status = 'Success';
+        SET OutputRoot.JSON.Data.message = 'Student updated successfully';
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;

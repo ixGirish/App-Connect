@@ -1,0 +1,25 @@
+CREATE COMPUTE MODULE postUpload_Compute
+
+CREATE FUNCTION Main() RETURNS BOOLEAN
+BEGIN
+    -- Copy the incoming LocalEnvironment
+    SET OutputLocalEnvironment = InputLocalEnvironment;
+
+    DECLARE fileName CHARACTER InputRoot.JSON.Data.fileName;
+    DECLARE base64Data CHARACTER InputRoot.JSON.Data.fileContent;
+
+    -- Create BLOB
+    CREATE LASTCHILD OF OutputRoot DOMAIN('BLOB');
+    SET OutputRoot.BLOB.BLOB = BASE64DECODE(base64Data);
+
+    -- Set file destination
+    SET OutputLocalEnvironment.Destination.File.Directory =
+        'C:\Users\GirishVijayDhole\Documents\appConnectUpload';
+
+    SET OutputLocalEnvironment.Destination.File.Name =
+        fileName;
+
+    RETURN TRUE;
+END;
+
+END MODULE;

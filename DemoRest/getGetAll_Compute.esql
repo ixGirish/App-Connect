@@ -1,0 +1,63 @@
+
+
+CREATE COMPUTE MODULE getGetAll_Compute
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+   SET OutputRoot.Properties.MessageDomain = 'JSON';
+  
+    CREATE FIELD OutputRoot.JSON.Data.output IDENTITY (JSON.Array) output;
+     CREATE FIELD OutputRoot.JSON.Data.error IDENTITY (JSON.Array) error;
+    
+SET Environment.Result[] = PASSTHRU(
+    'SELECT
+        COUNT(*) OVER() AS TOTAL_COUNT,
+        ID,
+        NAME,
+        AGE,
+        EMAIL
+     FROM dbo.STUDENT
+     ORDER BY ID
+    '
+);
+
+    DECLARE ref REFERENCE TO Environment.Result[1];
+    DECLARE idx INTEGER 1;
+
+    WHILE LASTMOVE(ref) DO
+
+        SET OutputRoot.JSON.Data.output.Item[idx].id   = ref.ID;
+        SET OutputRoot.JSON.Data.output.Item[idx].name = ref.NAME;
+        SET OutputRoot.JSON.Data.output.Item[idx].age  = ref.AGE;
+        SET OutputRoot.JSON.Data.output.Item[idx].email  = ref.EMAIL;
+
+        SET idx = idx + 1;
+        MOVE ref NEXTSIBLING;
+
+    END WHILE;
+    
+    set  OutputRoot.JSON.Data.pageInfo.totalCount=ref.TOTAL_COUNT;
+    set  OutputRoot.JSON.Data.pageInfo.pageNumber=0;
+    set  OutputRoot.JSON.Data.pageInfo.pageSize=2;
+    
+    SET  OutputRoot.JSON.Data.error.Item[1].msgCode='success';
+     SET  OutputRoot.JSON.Data.error.Item[1].description='Data fetched successfully';
+      SET  OutputRoot.JSON.Data.error.Item[1].code=200;
+      
+    
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;
